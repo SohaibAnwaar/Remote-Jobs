@@ -2,6 +2,9 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 import time
 
+from env import settings
+from shared_layer.kafka.bridge_helpers import KafkaProducerBridge
+from shared_layer.postgres.database import Database
 
 class Scrapper(metaclass=ABCMeta):
 	"""This is the Parent class for all the scrappers
@@ -19,19 +22,16 @@ class Scrapper(metaclass=ABCMeta):
 	_INSTANCE = None
 	# Class vars
 	def __init__(self) -> None:
-		
+		self.db = Database()
+		self.date_time_format ="%Y-%m-%d %H:%M:%S"
 		self.instance = None
-		# Start after 23 hours
-		self.start_after = 1380
+		self.delay = 1380
 		self.tags = []
-		self.db_obj = None
+		self.kafka_producer = KafkaProducerBridge()
 		self.name = "Main"
+		print(f"Initilising class {self.name}")
 	
-	def get_db_object(self, name):
-		if self.db_obj: return self.db_obj
-		else: return Databases("Scrapper Main Class")
-
-
+	
 	def __del__(self):
 		"""
 		"""
@@ -56,7 +56,7 @@ class Scrapper(metaclass=ABCMeta):
 		return cls(logger)
 		
 	@abstractmethod
-	def run(self):
+	def scrap(self):
 		"""Every scrapper class have run class
 		which will be the initial fucntion to start
 		every scrapper
@@ -70,30 +70,40 @@ class Scrapper(metaclass=ABCMeta):
 		"""
 		time.sleep(5)
 		scrapper_id, id = args
-		query = """delete from scrappers_health where WHERE scrapper_id=%s and id=%s"""
-		self.db_obj = self.get_db_object("Main Scrapper")
-		db_obj = Databases("Updating logs class Scrapper")
-		db_obj.run_insert_query(query, (scrapper_id,id,))
-	
+		print(f"Scrapper ID: {scrapper_id} and ID: {id}")
+		return True
 
-	def update_logs_in_db(self, time_taken_by_scrapper, leads_collected, scrapper_id, id, logger):
-		"""Update Scrapper Logs
+	def publish_message(self, value):
+		"""
+		Publish message to the queue in Kafka
 		"""
 		try:
-			update_query = """
-			UPDATE scrappers_health
-			SET leads_collected=%s, time_taken=%s, job_ended_at=%s
-			WHERE scrapper_id=%s and id=%s
-			"""
-			date =  datetime.now().strftime(date_time_format)
-			values = (leads_collected, time_taken_by_scrapper, date,scrapper_id,id,)
-			self.db_obj = self.get_db_object(f"Main Scrapper closing Scrapper {scrapper_id}")
-			self.db_obj.run_insert_query(update_query, values)
-			if logger: logger.info(f"Details Inserted into DB leads_collected: {leads_collected} time_taken_by_scrapper {time_taken_by_scrapper}")
-			
-			return (True, '')
+			self.kafka_producer.send_message(value)
+			return (True, None)
 		except Exception as e:
 			return (False, e)
+
+	def update_logs_in_db(self, time_taken_by_scrapper, leads_collected, scrapper_id, id, logger):
+			"""Update Scrapper Logs
+			"""
+			try:
+				update_query = """
+				UPDATE scrappers_health
+				SET leads_collected=%s, time_taken=%s, job_ended_at=%s
+				WHERE scrapper_id=%s and id=%s
+				"""
+				
+				date =  datetime.now().strftime(self.date_time_format)
+				values = (leads_collected, time_taken_by_scrapper, date,scrapper_id,id,)
+				self.db_obj = self.get_db_object(f"Main Scrapper closing Scrapper {scrapper_id}")
+				self.db_obj.run_insert_query(update_query, values)
+				if logger: logger.info(f"Details Inserted into DB leads_collected: {leads_collected} time_taken_by_scrapper {time_taken_by_scrapper}")
+				
+				return (True, '')
+			except Exception as e:
+				return (False, e)
+
+
 
 
 
