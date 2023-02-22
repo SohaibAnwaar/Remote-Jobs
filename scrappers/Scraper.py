@@ -29,6 +29,7 @@ class Scrapper(metaclass=ABCMeta):
 		self.tags = []
 		self.kafka_producer = KafkaProducerBridge()
 		self.name = "Main"
+		self.page_limit = 4
 		print(f"Initilising class {self.name}")
 	
 	
@@ -78,25 +79,23 @@ class Scrapper(metaclass=ABCMeta):
 		Publish message to the queue in Kafka
 		"""
 		try:
-			self.kafka_producer.send_message(value)
+			print("Publishing message to Kafka")
+			self.kafka_producer.publish_message("scrapper", value)
 			return (True, None)
 		except Exception as e:
 			return (False, e)
 
-	def update_logs_in_db(self, time_taken_by_scrapper, leads_collected, scrapper_id, id, logger):
+	def update_logs_in_db(self, time_taken_by_scrapper, leads_collected, id, logger):
 			"""Update Scrapper Logs
 			"""
 			try:
 				update_query = """
-				UPDATE scrappers_health
-				SET leads_collected=%s, time_taken=%s, job_ended_at=%s
-				WHERE scrapper_id=%s and id=%s
+				UPDATE scraper_health
+				SET leads_collected=%s, time_taken=%s
+				WHERE id=%s
 				"""
-				
-				date =  datetime.now().strftime(self.date_time_format)
-				values = (leads_collected, time_taken_by_scrapper, date,scrapper_id,id,)
-				self.db_obj = self.get_db_object(f"Main Scrapper closing Scrapper {scrapper_id}")
-				self.db_obj.run_insert_query(update_query, values)
+				values = (leads_collected, time_taken_by_scrapper, id,)
+				self.db.execute(update_query, values)
 				if logger: logger.info(f"Details Inserted into DB leads_collected: {leads_collected} time_taken_by_scrapper {time_taken_by_scrapper}")
 				
 				return (True, '')

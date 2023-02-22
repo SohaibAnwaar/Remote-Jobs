@@ -27,3 +27,17 @@ pyenv activate scraper
 pip install -r requirements.txt
 
 ```
+
+## Create Database
+1. Create the Database name `scraper` in postgres.
+2. Run this command to create tables.
+```bash
+# Create database
+python shared_layer/postgres/make_tables.py 
+```
+
+## Start the server
+```bash
+# Start the server
+python main.py
+```

@@ -1,4 +1,4 @@
-from scrappers.scrapper.GlassDoor import get_scraper
+from scrappers.scrapper.glassdoor import get_scraper
 from shared_layer.postgres.database import Database
 from datetime import datetime
 
@@ -12,6 +12,9 @@ def main(db_obj):
     """
     values = (scrapper.name,)
     result = db_obj.execute(insert_query, values)
+    scraper_health_id = result[0]
+    
+    scrapper.scrap(scraper_health_id)
     print(result)
 
 

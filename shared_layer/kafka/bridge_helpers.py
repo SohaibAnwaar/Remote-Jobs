@@ -79,6 +79,7 @@ class KafkaProducerBridge():
             value (dict): Message to be published
         """
         try:
+            print("Topics Name: ", topic_name)
             self.producer.send(topic_name, value=value)
             self.producer.flush()
             print("Message Published Successfully")

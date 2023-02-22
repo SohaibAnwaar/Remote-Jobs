@@ -14,7 +14,7 @@ from shared_layer.logger import logger
 
 
 
-class GlassDoor(Scrapper):  # Inherit from Scrapper
+class Glassdoor(Scrapper):  # Inherit from Scrapper
     """Scraping Glassdoor job leads
 
     Args:
@@ -136,6 +136,7 @@ class GlassDoor(Scrapper):  # Inherit from Scrapper
     def store_jobs(self, title, company, city, state, job_url, posted_date, country):
 
         valid = get_title(title)
+        print("valid", valid, "company", company)
         if valid and "recruit" not in company:
             if company is not None:
 
@@ -150,6 +151,7 @@ class GlassDoor(Scrapper):  # Inherit from Scrapper
                     "Region": country
                 }
                 # add in lead list that will be processed in run()
+                print("Adding to lead list")
                 self.publish_message(current_item)
                 self.lead_collected += 1
                 self.logger.info(f"Lead Collected: {self.lead_collected}")
@@ -217,7 +219,9 @@ class GlassDoor(Scrapper):  # Inherit from Scrapper
             if posted_date in posted_date_list \
                     and company is not None \
                     and company not in self.remove_companies:
-                self.prepare_jobs(title, company, city,
+                
+                
+                self.store_jobs(title, company, city,
                                   state, job_url, posted_date, country)
 
     def main_code(self, url_list):
@@ -230,8 +234,8 @@ class GlassDoor(Scrapper):  # Inherit from Scrapper
             - void
 
         """
-
-        for glassdoor_url in url_list:
+        
+        for glassdoor_url in url_list[:2]:
             # This page_url is incomplete and needs formatting down.
             page_url = glassdoor_url[0]
             region = glassdoor_url[1]
@@ -241,13 +245,18 @@ class GlassDoor(Scrapper):  # Inherit from Scrapper
                 keyword = keyword.replace(" ", "-")
                 try:
                     pg = 0
-                    end = int(os.getenv('PAGES_TO_VISIT'))
+                    end = self.page_limit
                     while pg < end:
                         pg += 1
                         # Format the page_url
                         url = page_url.format(keyword, pg)
                         self.logger.info(f"url: {url}")
                         r = requests.get(url, headers=self.headers)
+                        
+                        if r.status_code != 200:
+                            self.logger.info(f"Status Code: {r.status_code}")
+                            break
+
                         time.sleep(2)
                         soup = BeautifulSoup(r.text, "html.parser")
                         try:
@@ -256,22 +265,22 @@ class GlassDoor(Scrapper):  # Inherit from Scrapper
                             job_collection = article.findAll("li")
                             if len(job_collection) != 0:
                                 self.get_jobs(
-                                    job_collection, region, self.remove_companies, self.db
+                                    job_collection, region
                                 )
                             else:
                                 break
                         except:
                             self.logger.exception(
-                                "Error Occurred in us_main_code - Inner Except"
+                                "Error Occurred in main_code - Inner Except"
                             )
                             break
 
                 except Exception as e:
                     self.logger.exception(
-                        f"Error Occurred in us_main_code - Outer Except {e}")
+                        f"Error Occurred in main_code - Outer Except {e}")
                     continue
 
-    def scrap(self, args = ("glassdoor", None)):
+    def scrap(self, row_id):
         """Main function
 
         Args:
@@ -279,28 +288,24 @@ class GlassDoor(Scrapper):  # Inherit from Scrapper
             id (_type_): _description_
         """
         try:
-            scrapper_id, id = args
+            id = row_id
             # Getting the starting time
             start_time = time.time()
             self.main_code(self.glassdoor_url_list)
             # Getting time taken by the scrapper to get leads
             time_taken_by_scrapper = (time.time() - start_time) // 60
-            # Updating the scrapper logs
-            status, message = self.update_logs_in_db(
-                time_taken_by_scrapper, self.lead_collected, scrapper_id, id, self.logger
-            )
             # Logging things.
             self.logger.info(f" - leads Collected {self.lead_collected}")
-            self.logger.info(f"Logs Updating Status  {status} - {message} ")
         except Exception as e:
             self.logger.exception(f"Error Occured {self.name}")
             self.logger.info(f" - leads Collected {self.lead_collected}")
             time_taken_by_scrapper = 0
             
         finally:
-
+            self.logger.info(f" - Time Taken {time_taken_by_scrapper} minutes")
+            # Updating the scrapper logs
             status, message = self.update_logs_in_db(
-                time_taken_by_scrapper, self.lead_collected, scrapper_id, id, self.logger
+                time_taken_by_scrapper, self.lead_collected, id, self.logger
             )
 
 
@@ -310,4 +315,4 @@ def get_scraper():  # by default None
     Returns:
        GlassDoor : Initialize Scraper object and return object
     """
-    return GlassDoor()
+    return Glassdoor()
