@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from scrappers.Scraper import Scrapper
+from scrappers.scraper import Scrapper
 from scrappers.shared_attr import posted_date_list, title_keywords
 from scrappers.helper import get_title
 from shared_layer.logger import logger
@@ -122,7 +122,6 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
         self.name = "glassdoor.com"
         self.logger = logger.get_logger(self.name)
         self.lead_collected = 0
-        print("Initializing Glassdoor.com")
 
     def __del__(self):
         """Calling destructor for deleting db object when object is destroyed
@@ -133,28 +132,7 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
         self.logger.info(f"Closing {self.name} db Object")
         return super().__del__()
 
-    def store_jobs(self, title, company, city, state, job_url, posted_date, country):
-
-        valid = get_title(title)
-        print("valid", valid, "company", company)
-        if valid and "recruit" not in company:
-            if company is not None:
-
-                current_item = {
-                    "Title": title,
-                    "Company": company,
-                    "City": city,
-                    "State": state,
-                    "Platform": self.name,
-                    "LeadUrl": job_url,
-                    "Posted_date": posted_date,
-                    "Region": country
-                }
-                # add in lead list that will be processed in run()
-                print("Adding to lead list")
-                self.publish_message(current_item)
-                self.lead_collected += 1
-                self.logger.info(f"Lead Collected: {self.lead_collected}")
+    
 
     def get_jobs(self, job_collection, country):
         """Get New Jobs(leads) and save in the database jobs_leads table
@@ -205,6 +183,12 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
                 city = location.split(",")[0]
             except:
                 city = location
+            
+            try:
+                description = job_container.find("div", id="JobDescriptionContainer"
+                ).text.strip()
+            except:
+                description = ""
             try:
                 state = location.split(",")[1]
             except:
@@ -220,9 +204,18 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
                     and company is not None \
                     and company not in self.remove_companies:
                 
-                
+                # Getting Description
+                r = requests.get(job_url, headers=self.headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                try:
+                    description = soup.find("div", id="JobDescriptionContainer"
+                    ).get_text(separator="\n").strip()
+                except:
+                    description = ""
+
                 self.store_jobs(title, company, city,
-                                  state, job_url, posted_date, country)
+                                  state, job_url, posted_date,
+                                   country, description)
 
     def main_code(self, url_list):
         """Extract Jobs(leads) against every glassdoor_url

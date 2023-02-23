@@ -6,9 +6,7 @@ def get_title(title):
             and 'lecturer' not in title and 'student' not in title \
             and 'professor' not in title:
         for keyword in title_keywords:
-            # print(keyword)
             if keyword in title:
-                # print(keyword)
                 return True
         else:
             return False

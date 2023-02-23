@@ -1,24 +1,25 @@
 import os, sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-print("BASE_DIR", BASE_DIR)
 sys.path.append(BASE_DIR)
 
 from shared_layer.postgres.database import Database
 
 db = Database()
 
+
 # Create leads Table
 db.execute('''
 CREATE TABLE IF NOT EXISTS leads (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255) ,
-    category VARCHAR(255) ,
+    title TEXT ,
     city VARCHAR(255) ,
     state VARCHAR(255) ,
     country VARCHAR(255) ,
     lead_date VARCHAR(255) ,
-    lead_url VARCHAR(255) ,
-    company_url VARCHAR(255) ,
+    lead_url TEXT ,
+    company_url TEXT ,
+    description TEXT ,
+    platform VARCHAR(255) ,
     created_at TIMESTAMPTZ  DEFAULT NOW(),
     updated_at TIMESTAMPTZ  DEFAULT NOW()
 

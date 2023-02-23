@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     # Database
     database_hostname: str = 'localhost'
     database_password: str = 'postgres'
-    database_name: str = 'scrapers'
+    database_name: str = 'scraper'
     database_username: str = 'postgres'
     database_port: str = '5432'
     
