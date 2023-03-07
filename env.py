@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     db_log_path: str = 'logs/db.log'
     scrapper_log_path: str = 'logs/scraper/'
 
+    # Scrappers
+    simutanious_scrappers: int = 5
+
     class Config:
         env_file = ".env"
 

@@ -7,11 +7,11 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from scrappers.scraper import Scrapper
+from scrappers.scraper import Scrapper, in_progress_jobs
 from scrappers.shared_attr import posted_date_list, title_keywords
 from scrappers.helper import get_title
 from shared_layer.logger import logger
-
+from shared_layer.variables import in_progress
 
 
 class Glassdoor(Scrapper):  # Inherit from Scrapper
@@ -29,6 +29,7 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
 
     def __init__(self):
         super().__init__()
+
         self.glassdoor_url_list = [
             [
                 "https://www.glassdoor.com/Job/us-{}-jobs-SRCH_IL.0,2_IN1_KO3,13_IP{}.htm?fromAge=1&radius=25",
@@ -132,8 +133,6 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
         self.logger.info(f"Closing {self.name} db Object")
         return super().__del__()
 
-    
-
     def get_jobs(self, job_collection, country):
         """Get New Jobs(leads) and save in the database jobs_leads table
 
@@ -183,10 +182,10 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
                 city = location.split(",")[0]
             except:
                 city = location
-            
+
             try:
                 description = job_container.find("div", id="JobDescriptionContainer"
-                ).text.strip()
+                                                 ).text.strip()
             except:
                 description = ""
             try:
@@ -203,19 +202,19 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
             if posted_date in posted_date_list \
                     and company is not None \
                     and company not in self.remove_companies:
-                
+
                 # Getting Description
                 r = requests.get(job_url, headers=self.headers)
                 soup = BeautifulSoup(r.text, "html.parser")
                 try:
                     description = soup.find("div", id="JobDescriptionContainer"
-                    ).get_text(separator="\n").strip()
+                                            ).get_text(separator="\n").strip()
                 except:
                     description = ""
 
                 self.store_jobs(title, company, city,
-                                  state, job_url, posted_date,
-                                   country, description)
+                                state, job_url, posted_date,
+                                country, description)
 
     def main_code(self, url_list):
         """Extract Jobs(leads) against every glassdoor_url
@@ -227,7 +226,7 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
             - void
 
         """
-        
+
         for glassdoor_url in url_list[:2]:
             # This page_url is incomplete and needs formatting down.
             page_url = glassdoor_url[0]
@@ -245,7 +244,7 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
                         url = page_url.format(keyword, pg)
                         self.logger.info(f"url: {url}")
                         r = requests.get(url, headers=self.headers)
-                        
+
                         if r.status_code != 200:
                             self.logger.info(f"Status Code: {r.status_code}")
                             break
@@ -272,7 +271,8 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
                     self.logger.exception(
                         f"Error Occurred in main_code - Outer Except {e}")
                     continue
-
+    
+    @in_progress_jobs
     def scrap(self, row_id):
         """Main function
 
@@ -281,6 +281,7 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
             id (_type_): _description_
         """
         try:
+            
             id = row_id
             # Getting the starting time
             start_time = time.time()
@@ -293,7 +294,7 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
             self.logger.exception(f"Error Occured {self.name}")
             self.logger.info(f" - leads Collected {self.lead_collected}")
             time_taken_by_scrapper = 0
-            
+
         finally:
             self.logger.info(f" - Time Taken {time_taken_by_scrapper} minutes")
             # Updating the scrapper logs

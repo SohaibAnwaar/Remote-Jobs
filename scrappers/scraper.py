@@ -1,11 +1,14 @@
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 import time
+from collections import deque
 
 from env import settings
 from scrappers.helper import get_title
 from shared_layer.kafka.producer import KafkaProducerBridge
 from shared_layer.postgres.database import Database
+from shared_layer.variables import in_progress
+
 
 
 class Scrapper(metaclass=ABCMeta):
@@ -62,7 +65,6 @@ class Scrapper(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-
     def update_logs_in_db(self, time_taken_by_scrapper, leads_collected, id, logger):
         """Update Scrapper Logs
         """
@@ -78,6 +80,7 @@ class Scrapper(metaclass=ABCMeta):
                 logger.info(
                     f"Details Inserted into DB leads_collected: {leads_collected} time_taken_by_scrapper {time_taken_by_scrapper}")
 
+            print(f"Job Removed {self.name}")
             return (True, '')
         except Exception as e:
             return (False, e)
@@ -101,6 +104,22 @@ class Scrapper(metaclass=ABCMeta):
 
             }
             # add in lead list that will be processed in run()
-            self.kafka_producer.publish_message(settings.kafka_topic, current_item)
+            self.kafka_producer.publish_message(
+                settings.kafka_topic, current_item)
             self.lead_collected += 1
             self.logger.info(f"Lead Collected: {self.lead_collected}")
+
+
+
+# Decorator to log in progress jobs
+def in_progress_jobs(func):
+    def wrapper(*args, **kwargs):
+        self = args[0]
+        if self.name not in in_progress.get_jobs() and in_progress.get_job_count() <= settings.simutanious_scrappers:
+            in_progress.add_job(self.name)
+            self.logger.info(f"Job Added {self.name}")
+            func(*args, **kwargs)
+            in_progress.remove_job(self.name)
+        else:
+            self.logger.info(f"Job Already Running {self.name}")
+    return wrapper

@@ -1,0 +1,4 @@
+{
+    "glassdoor": "./scrappers/scrapper/glassdoor.py",
+    "glassdoor1": "./scrappers/scrapper/glassdoor2.py"
+}
