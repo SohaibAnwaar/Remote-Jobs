@@ -27,6 +27,16 @@ pyenv activate scraper
 pip install -r requirements.txt
 
 ```
+Now you have to install docker into your system. You can find the installation guide [here](https://docs.docker.com/engine/install/).
+
+go to `docker` directory and run this command to start the postgres server.
+```bash
+docker-compose up -d
+```
+for docker-compose status run this command
+```bash
+docker-compose ps
+```
 
 ## Create Database
 1. Create the Database name `scraper` in postgres.
@@ -41,3 +51,9 @@ python shared_layer/postgres/make_tables.py
 # Start the server
 python main.py
 ```
+
+## Development Environment
+if you want to run the server in development mode, then you need to set `ENV` to `dev` in `.env` file.
+
+mention scrapers here you want to run in development mode `scrappers/scrapper/available_scrappers_dev.json`
+
