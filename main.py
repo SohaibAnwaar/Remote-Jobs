@@ -8,6 +8,7 @@ from shared_layer.variables import in_progress
 import json
 import importlib.util
 import sys, time
+from env import settings
     
 
 scrappers = []
@@ -18,7 +19,12 @@ def get_scraper():
     import the scrapers and return the scrapper object
     """
     global scrappers
-    with open("scrappers/scrapper/available_scrappers.json") as f:
+    env = settings.env
+    scrapper_json = "scrappers/scrapper/available_scrappers.json"
+    if env == "dev":
+        scrapper_json = "scrappers/scrapper/available_scrappers_dev.json"
+    
+    with open(scrapper_json) as f:
         available_scrappers = json.load(f)
     for name, path in available_scrappers.items():
         spec = importlib.util.spec_from_file_location(name, path)
@@ -36,6 +42,7 @@ def main(db_obj):
     while True:
         
         for name in available_scrappers:
+
             insert_query = """
             INSERT INTO scraper_health (name)
             VALUES (%s) RETURNING id;
@@ -56,7 +63,10 @@ def main(db_obj):
                 thread.start()
 
                 print(scrapper_object)
-        time.sleep(3)
+            time.sleep(3)
+        # Sleep for 24 hours
+        print("Sleeping for 24 hours")
+        time.sleep(60 * 60 * 24)
         
 if __name__ == "__main__":
     # Initilizing Kafka Consumer

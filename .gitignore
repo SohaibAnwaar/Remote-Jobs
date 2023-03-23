@@ -3,3 +3,4 @@
 *.log
 *__pycache__*
 shared_layer/kafka/__pycache__/bridge_helpers.cpython-39.pyc
+.env

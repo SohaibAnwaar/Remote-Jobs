@@ -1,4 +1,3 @@
 {
-    "glassdoor": "./scrappers/scrapper/glassdoor.py",
     "linkedin": "./scrappers/scrapper/linkedin.py"
 }

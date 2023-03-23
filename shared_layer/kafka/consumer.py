@@ -51,6 +51,7 @@ class KafkaConsumerBridge():
                         self.logger.info('Time taken: {}, status: {} '.format(
                             time.time() - st_time, 'success'))
             except Exception as e:
+                self.logger.error(e)
                 self.logger.error('Time taken: {}, status: {} Query executed: {} '.format(
                     time.time() - st_time, query, 'failed'))
 

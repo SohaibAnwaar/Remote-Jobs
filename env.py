@@ -29,6 +29,7 @@ class Settings(BaseSettings):
 
     # Scrappers
     simutanious_scrappers: int = 5
+    env = 'dev'
 
     class Config:
         env_file = ".env"

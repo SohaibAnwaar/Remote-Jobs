@@ -36,6 +36,7 @@ class Database:
             self.logger.info('Time taken: {}, status: {} Query executed: {} '.format(time.time() - st_time, query, 'success'))
         except Exception as e:
             self.logger.error('Time taken: {}, status: {} Query executed: {} '.format(time.time() - st_time, query, 'failed'))
+            self.logger.error('Params: {}'.format(params) )
             self.logger.error(e)
         return result
         

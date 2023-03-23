@@ -273,7 +273,7 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
                     continue
     
     @in_progress_jobs
-    def scrap(self, row_id):
+    def scrap(self, id):
         """Main function
 
         Args:
@@ -281,8 +281,6 @@ class Glassdoor(Scrapper):  # Inherit from Scrapper
             id (_type_): _description_
         """
         try:
-            
-            id = row_id
             # Getting the starting time
             start_time = time.time()
             self.main_code(self.glassdoor_url_list)
