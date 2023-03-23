@@ -49,8 +49,7 @@ class LinkedIn(Scrapper):  # Inherit from Scrapper
     def __init__(self):
         super().__init__()
         self.base_url = "https://ca.linkedin.com/jobs"
-        self.job_portal = "https://ca.linkedin.com/jobs/search?keywords={}&location=Lahore%2C%20Punjab%2C%20Pakistan&geoId=&trk=homepage-jobseeker_jobs-search-bar_search-submit&position=1&pageNum={}"
-        self.job_portal = "https://ca.linkedin.com/jobs/search?keywords={}&location=Lahore%2C%20Punjab%2C%20Pakistan&locationId=&geoId=104112529&f_TPR=r86400&distance=100&f_WT=2&position=1&pageNum={}"
+        self.job_portal = "https://ca.linkedin.com/jobs/search?keywords={}&location=Worldwide&locationId=&geoId=92000000&f_TPR=r86400&distance=100&f_WT=2&position=1&pageNum={}"
         self.headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/83.0.4103.116 Safari/537.36"
